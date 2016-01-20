@@ -1,16 +1,13 @@
 package com.lyndir.masterpassword;
 
-import static com.lyndir.lhunath.opal.system.util.StringUtils.strf;
+import static com.lyndir.lhunath.opal.system.util.StringUtils.*;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Charsets;
 import com.lyndir.lhunath.opal.system.MessageAuthenticationDigests;
 import com.lyndir.lhunath.opal.system.logging.Logger;
-import java.awt.*;
 import java.nio.*;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Map;
 
 
 /**
@@ -22,20 +19,20 @@ public class MPIdenticon {
     @SuppressWarnings("UnusedDeclaration")
     private static final Logger logger = Logger.get( MPIdenticon.class );
 
-    private static final Charset charset = Charset.forName("UTF-8");
-    private static final Color[] colors  = new Color[]{
+    private static final Charset charset   = Charsets.UTF_8;
+    private static final Color[] colors    = new Color[]{
             Color.RED, Color.GREEN, Color.YELLOW, Color.BLUE, Color.MAGENTA, Color.CYAN, Color.MONO };
-    private static final char[] leftArm   = new char[]{ '╔', '╚', '╰', '═' };
-    private static final char[] rightArm  = new char[]{ '╗', '╝', '╯', '═' };
-    private static final char[] body      = new char[]{ '█', '░', '▒', '▓', '☺', '☻' };
-    private static final char[] accessory = new char[]{
+    private static final char[]  leftArm   = new char[]{ '╔', '╚', '╰', '═' };
+    private static final char[]  rightArm  = new char[]{ '╗', '╝', '╯', '═' };
+    private static final char[]  body      = new char[]{ '█', '░', '▒', '▓', '☺', '☻' };
+    private static final char[]  accessory = new char[]{
             '◈', '◎', '◐', '◑', '◒', '◓', '☀', '☁', '☂', '☃', '☄', '★', '☆', '☎', '☏', '⎈', '⌂', '☘', '☢', '☣', '☕', '⌚', '⌛', '⏰', '⚡',
             '⛄', '⛅', '☔', '♔', '♕', '♖', '♗', '♘', '♙', '♚', '♛', '♜', '♝', '♞', '♟', '♨', '♩', '♪', '♫', '⚐', '⚑', '⚔', '⚖', '⚙', '⚠',
             '⌘', '⏎', '✄', '✆', '✈', '✉', '✌' };
 
-    private final String         fullName;
-    private final Color          color;
-    private final String         text;
+    private final String fullName;
+    private final Color  color;
+    private final String text;
 
     public MPIdenticon(String fullName, String masterPassword) {
         this( fullName, masterPassword.toCharArray() );
@@ -70,7 +67,6 @@ public class MPIdenticon {
     public Color getColor() {
         return color;
     }
-
 
     public enum Color {
         RED,

@@ -36,8 +36,8 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
     @try {
-        [[NSBundle mainBundle] mutableInfoDictionary][@"CFBundleDisplayName"] = @"Master Password";
-        [[NSBundle mainBundle] mutableLocalizedInfoDictionary][@"CFBundleDisplayName"] = @"Master Password";
+//        [[NSBundle mainBundle] mutableInfoDictionary][@"CFBundleDisplayName"] = @"Master Password";
+//        [[NSBundle mainBundle] mutableLocalizedInfoDictionary][@"CFBundleDisplayName"] = @"Master Password";
 
 #ifdef CRASHLYTICS
         NSString *crashlyticsAPIKey = [self crashlyticsAPIKey];
@@ -46,10 +46,10 @@
 #if defined (DEBUG) || defined (ADHOC)
             [Crashlytics sharedInstance].debugMode = YES;
 #endif
-            [Crashlytics setUserIdentifier:[PearlKeyChain deviceIdentifier]];
-            [Crashlytics setObjectValue:[PearlKeyChain deviceIdentifier] forKey:@"deviceIdentifier"];
-            [Crashlytics setUserName:@"Anonymous"];
-            [Crashlytics setObjectValue:@"Anonymous" forKey:@"username"];
+            [[Crashlytics sharedInstance] setUserIdentifier:[PearlKeyChain deviceIdentifier]];
+            [[Crashlytics sharedInstance] setObjectValue:[PearlKeyChain deviceIdentifier] forKey:@"deviceIdentifier"];
+            [[Crashlytics sharedInstance] setUserName:@"Anonymous"];
+            [[Crashlytics sharedInstance] setObjectValue:@"Anonymous" forKey:@"username"];
             [Crashlytics startWithAPIKey:crashlyticsAPIKey];
             [[PearlLogger get] registerListener:^BOOL(PearlLogMessage *message) {
                 PearlLogLevel level = PearlLogLevelInfo;

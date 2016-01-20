@@ -55,7 +55,7 @@ PearlAssociatedObjectProperty( NSNumber*, StoreCorrupted, storeCorrupted );
         @try {
             mocBlock( mainManagedObjectContext );
         }
-        @catch (NSException *exception) {
+        @catch (id exception) {
             err( @"While performing managed block:\n%@", [exception fullDescription] );
         }
     }];
@@ -223,20 +223,13 @@ PearlAssociatedObjectProperty( NSNumber*, StoreCorrupted, storeCorrupted );
         self.storeCorrupted = @NO;
 
 #if TARGET_OS_IPHONE
-        PearlAddNotificationObserver( UIApplicationWillTerminateNotification, UIApp, [NSOperationQueue mainQueue],
-                ^(MPAppDelegate_Shared *self, NSNotification *note) {
-                    [self.mainManagedObjectContext saveToStore];
-                } );
-        PearlAddNotificationObserver( UIApplicationDidEnterBackgroundNotification, UIApp, [NSOperationQueue mainQueue],
-                ^(MPAppDelegate_Shared *self, NSNotification *note) {
-                    [self.mainManagedObjectContext saveToStore];
-                } );
+        PearlAddNotificationObserver( UIApplicationWillResignActiveNotification, UIApp, [NSOperationQueue mainQueue],
 #else
-        PearlAddNotificationObserver( NSApplicationWillTerminateNotification, NSApp, [NSOperationQueue mainQueue],
-                ^(MPAppDelegate_Shared *self, NSNotification *note) {
-                    [self.mainManagedObjectContext saveToStore];
-                } );
+        PearlAddNotificationObserver( NSApplicationWillResignActiveNotification, NSApp, [NSOperationQueue mainQueue],
 #endif
+                ^(MPAppDelegate_Shared *self, NSNotification *note) {
+        [self.mainManagedObjectContext saveToStore];
+        } );
 
         // Perform a data sanity check on the newly loaded store to find and fix any issues.
         if ([[MPConfig get].checkInconsistency boolValue])
@@ -723,7 +716,7 @@ PearlAssociatedObjectProperty( NSNumber*, StoreCorrupted, storeCorrupted );
         NSDate *lastUsed = [[NSDateFormatter rfc3339DateFormatter] dateFromString:siteElements[0]];
         NSUInteger uses = (unsigned)[siteElements[1] integerValue];
         MPSiteType type = (MPSiteType)[siteElements[2] integerValue];
-        NSUInteger version = (unsigned)[siteElements[3] integerValue];
+        MPAlgorithmVersion version = (MPAlgorithmVersion)[siteElements[3] integerValue];
         NSUInteger counter = [siteElements[4] length]? (unsigned)[siteElements[4] integerValue]: NSNotFound;
         NSString *loginName = [siteElements[5] length]? siteElements[5]: nil;
         NSString *siteName = siteElements[6];
@@ -828,9 +821,9 @@ PearlAssociatedObjectProperty( NSNumber*, StoreCorrupted, storeCorrupted );
         NSString *contentExport = content?: @"";
         [export appendFormat:@"%@  %8ld  %8S  %25S\t%25S\t%@\n",
                              lastUsedExport, usesExport,
-                             (const unichar *)[typeExport cStringUsingEncoding:NSUTF16StringEncoding],
-                             (const unichar *)[loginNameExport cStringUsingEncoding:NSUTF16StringEncoding],
-                             (const unichar *)[siteName cStringUsingEncoding:NSUTF16StringEncoding],
+                             (const unsigned short *)[typeExport cStringUsingEncoding:NSUTF16StringEncoding],
+                             (const unsigned short *)[loginNameExport cStringUsingEncoding:NSUTF16StringEncoding],
+                             (const unsigned short *)[siteName cStringUsingEncoding:NSUTF16StringEncoding],
                              contentExport];
     }
 

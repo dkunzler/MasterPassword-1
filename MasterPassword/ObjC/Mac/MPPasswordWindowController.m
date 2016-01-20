@@ -43,9 +43,12 @@
 
 - (void)windowDidLoad {
 
+    prof_new( @"windowDidLoad" );
     [super windowDidLoad];
+    prof_rewind( @"super" );
 
     [self replaceFonts:self.window.contentView];
+    prof_rewind( @"replaceFonts" );
 
 //    [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationWillBecomeActiveNotification object:nil
 //                                                       queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
@@ -57,19 +60,22 @@
 //    }];
     [[NSNotificationCenter defaultCenter] addObserverForName:NSWindowDidBecomeKeyNotification object:self.window
                                                        queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+                prof_new( @"didBecomeKey" );
                 [self fadeIn];
+                prof_rewind( @"fadeIn" );
                 [self updateUser];
+                prof_finish( @"updateUser" );
             }];
     [[NSNotificationCenter defaultCenter] addObserverForName:NSWindowWillCloseNotification object:self.window
                                                        queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
                 NSWindow *sheet = [self.window attachedSheet];
                 if (sheet)
-                    [NSApp endSheet:sheet];
+                    [self.window endSheet:sheet];
             }];
     [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationWillResignActiveNotification object:nil
                                                        queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
 #ifndef DEBUG
-        [self fadeOut];
+                [self fadeOut];
 #endif
             }];
     [[NSNotificationCenter defaultCenter] addObserverForName:MPSignedInNotification object:nil
@@ -82,10 +88,13 @@
             }];
     [self observeKeyPath:@"sitesController.selection"
                withBlock:^(id from, id to, NSKeyValueChange cause, id _self) {
+                   prof_new( @"sitesController.selection" );
                    [_self updateSelection];
+                   prof_finish( @"updateSelection" );
                }];
+    prof_rewind( @"observers" );
 
-    NSSearchFieldCell *siteFieldCell = self.siteField.cell;
+    NSSearchFieldCell *siteFieldCell = (NSSearchFieldCell *)self.siteField.cell;
     siteFieldCell.searchButtonCell = nil;
     siteFieldCell.cancelButtonCell = nil;
 
@@ -96,6 +105,7 @@
     self.siteTable.superview.superview.layer.mask = self.siteGradient;
 
     self.siteTable.controller = self;
+    prof_finish( @"ui" );
 }
 
 - (void)replaceFonts:(NSView *)view {
@@ -117,6 +127,7 @@
     BOOL alternatePressed = (theEvent.modifierFlags & NSAlternateKeyMask) != 0;
     if (alternatePressed != self.alternatePressed) {
         self.alternatePressed = alternatePressed;
+        self.showVersionContainer = self.alternatePressed || self.selectedSite.outdated;
         [self.selectedSite updateContent];
 
         if (self.locked) {
@@ -133,6 +144,7 @@
 
 #pragma mark - NSResponder
 
+// Handle any unhandled editor command.
 - (void)doCommandBySelector:(SEL)commandSelector {
 
     [self handleCommand:commandSelector];
@@ -140,6 +152,7 @@
 
 #pragma mark - NSTextFieldDelegate
 
+// Editor command in a text field.
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)fieldEditor doCommandBySelector:(SEL)commandSelector {
 
     if (control == self.siteField) {
@@ -587,6 +600,9 @@
             (__bridge id)[NSColor whiteColor].CGColor,
             (__bridge id)[NSColor colorWithDeviceWhite:1 alpha:gradientOpacity].CGColor
     ];
+
+    self.showVersionContainer = self.alternatePressed || self.selectedSite.outdated;
+    [self.sitePasswordTipField setAttributedStringValue:straf( @"Your password for %@:", self.selectedSite.displayedName )];
 }
 
 - (void)createNewSite:(NSString *)siteName {
@@ -618,8 +634,11 @@
 
 - (void)fadeIn {
 
-    if ([self.window isOnActiveSpace] && self.window.alphaValue)
+    prof_new( @"fadeIn" );
+    if ([self.window isOnActiveSpace] && self.window.alphaValue > FLT_EPSILON) {
+        prof_finish( @"showing" );
         return;
+    }
 
     CGDirectDisplayID displayID = [self.window.screen.deviceDescription[@"NSScreenNumber"] unsignedIntValue];
     CGImageRef capturedImage = CGDisplayCreateImage( displayID );
@@ -627,16 +646,20 @@
         if (capturedImage)
             CFRelease( capturedImage );
         wrn( @"Failed to capture screen image for display: %d", displayID );
+        prof_finish( @"capture failed" );
         return;
     }
+    prof_rewind( @"capture" );
 
     NSImage *screenImage = [[NSImage alloc] initWithCGImage:capturedImage size:NSMakeSize(
             CGImageGetWidth( capturedImage ) / self.window.backingScaleFactor,
             CGImageGetHeight( capturedImage ) / self.window.backingScaleFactor )];
+    prof_rewind( @"screenImage" );
 
     NSImage *smallImage = [[NSImage alloc] initWithSize:NSMakeSize(
             CGImageGetWidth( capturedImage ) / 20,
             CGImageGetHeight( capturedImage ) / 20 )];
+    prof_rewind( @"smallImage" );
     CFRelease( capturedImage );
     [smallImage lockFocus];
     [screenImage drawInRect:(NSRect){ .origin = CGPointZero, .size = smallImage.size, }
@@ -644,12 +667,15 @@
                   operation:NSCompositeSourceOver
                    fraction:1.0];
     [smallImage unlockFocus];
+    prof_rewind( @"scale" );
 
     self.blurView.image = smallImage;
+    prof_rewind( @"blurView" );
 
     [self.window setFrame:self.window.screen.frame display:YES];
     [NSAnimationContext currentContext].timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn];
     self.window.animator.alphaValue = 1.0;
+    prof_finish( @"window setup" );
 }
 
 - (void)fadeOut {
@@ -659,7 +685,7 @@
 
 - (void)fadeOut:(BOOL)hide {
 
-    if (![NSApp isActive] && !self.window.alphaValue)
+    if (![NSApp isActive] && self.window.alphaValue <= FLT_EPSILON)
         return;
 
     [[NSAnimationContext currentContext] setCompletionHandler:^{

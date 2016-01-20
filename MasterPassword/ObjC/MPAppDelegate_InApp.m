@@ -36,7 +36,7 @@ PearlAssociatedObjectProperty( NSMutableArray*, ProductObservers, productObserve
 - (void)reloadProducts {
 
     SKProductsRequest *productsRequest = [[SKProductsRequest alloc] initWithProductIdentifiers:
-            [[NSSet alloc] initWithObjects:MPProductGenerateLogins, MPProductGenerateAnswers, MPProductFuel, nil]];
+            [[NSSet alloc] initWithObjects:MPProductGenerateLogins, MPProductGenerateAnswers, MPProductTouchID, MPProductFuel, nil]];
     productsRequest.delegate = self;
     [productsRequest start];
 }
@@ -142,7 +142,7 @@ PearlAssociatedObjectProperty( NSMutableArray*, ProductObservers, productObserve
                     float currentFuel = [[MPiOSConfig get].developmentFuelRemaining floatValue];
                     float purchasedFuel = transaction.payment.quantity / MP_FUEL_HOURLY_RATE;
                     [MPiOSConfig get].developmentFuelRemaining = @(currentFuel + purchasedFuel);
-                    if (![MPiOSConfig get].developmentFuelChecked || !currentFuel)
+                    if (![MPiOSConfig get].developmentFuelChecked || currentFuel < DBL_EPSILON)
                         [MPiOSConfig get].developmentFuelChecked = [NSDate date];
                 }
                 [[NSUserDefaults standardUserDefaults] setObject:transaction.transactionIdentifier
